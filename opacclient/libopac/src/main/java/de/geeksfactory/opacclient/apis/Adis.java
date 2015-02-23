@@ -1011,7 +1011,8 @@ public class Adis extends BaseApi implements OpacApi {
 			}
 			for (Element tr : doc.select(".rTable_div tr")) {
 				if (tr.select("a").size() == 1) {
-					if (tr.text().contains("Reservationen")
+                                        if (( tr.text().contains("Reservationen") ||
+                                              tr.text().contains("Vormerkungen") )
 							&& !tr.child(0).text().trim().equals("")
 							&& tr.select("a").first().attr("href")
 									.toUpperCase(Locale.GERMAN)
@@ -1126,7 +1127,7 @@ public class Adis extends BaseApi implements OpacApi {
 								.trim());
 				if (split.length > 1)
 					line.put(AccountData.KEY_LENT_AUTHOR, split[1].replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1").trim());
-				
+
 				line.put(AccountData.KEY_LENT_DEADLINE, tr.child(1).text()
 						.trim());
 				try {
@@ -1193,7 +1194,7 @@ public class Adis extends BaseApi implements OpacApi {
 				if (th.text().contains("Titel"))
 					colmap.put(AccountData.KEY_RESERVATION_TITLE, i);
 				i++;
-					
+
 			}
 			for (Element tr : rdoc.select(".rTable_div tbody tr")) {
 				if (tr.children().size() >= 4) {
