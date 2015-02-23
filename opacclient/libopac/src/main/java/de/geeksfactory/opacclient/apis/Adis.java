@@ -1181,6 +1181,7 @@ public class Adis extends BaseApi implements OpacApi {
 		for (String rlink : rlinks) {
 			Document rdoc = htmlGet(rlink);
 			boolean error = false;
+                        boolean voebb = rdoc.head().html().contains("VOEBB");
 			Map<String, Integer> colmap = new HashMap<String, Integer>();
 			colmap.put(AccountData.KEY_RESERVATION_TITLE, 2);
 			colmap.put(AccountData.KEY_RESERVATION_BRANCH, 1);
@@ -1194,7 +1195,6 @@ public class Adis extends BaseApi implements OpacApi {
 				if (th.text().contains("Titel"))
 					colmap.put(AccountData.KEY_RESERVATION_TITLE, i);
 				i++;
-
 			}
 			for (Element tr : rdoc.select(".rTable_div tbody tr")) {
 				if (tr.children().size() >= 4) {
@@ -1204,13 +1204,16 @@ public class Adis extends BaseApi implements OpacApi {
 							.html();
 					text = Jsoup.parse(text.replaceAll("(?i)<br[^>]*>", ";"))
 							.text();
-					String[] split = text.split("[:/;\n]");
-					line.put(AccountData.KEY_RESERVATION_TITLE, split[0]
-							.replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1").trim());
-					if (split.length > 1)
-						line.put(AccountData.KEY_RESERVATION_AUTHOR, split[1]
-								.replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1")
-								.trim());
+                                        String title  = text;
+                                        if (!voebb) {
+                                            String[] split = text.split("[:/;\n]");
+                                            title = split[0].replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1");
+                                            if (split.length > 1)
+                                                line.put(AccountData.KEY_RESERVATION_AUTHOR, split[1]
+                                                         .replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1")
+                                                         .trim());
+                                        }
+					line.put(AccountData.KEY_RESERVATION_TITLE, title.trim());
 					line.put(
 							AccountData.KEY_RESERVATION_BRANCH,
 							tr.child(
