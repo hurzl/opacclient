@@ -1121,13 +1121,23 @@ public class Adis extends BaseApi implements OpacApi {
 				String text = Jsoup.parse(
 						tr.child(3).html().replaceAll("(?i)<br[^>]*>", "#"))
 						.text();
-				String[] split = text.split("[/#\n]");
-				line.put(AccountData.KEY_LENT_TITLE,
-						split[0].replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1")
-								.trim());
-				if (split.length > 1)
+                                if (text.contains(" / ")) {
+                                    // Normale Ausleihe: "Titel / Autor #Sig#Nr"
+                                    String[] split = text.split("[/#\n]");
+                                    String title = split[0];
+                                    if (!voebb) title = title.replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1");
+                                    line.put(AccountData.KEY_LENT_TITLE, title.trim());
+                                    if (split.length > 1)
 					line.put(AccountData.KEY_LENT_AUTHOR, split[1].replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1").trim());
-
+                                } else {
+                                    // Fernleihe: "Autor: Titel - Verlag - ISBN:... #Nummer"
+                                    String[] split = text.split("#");
+                                    String[] aut_tit = split[0].split(": ");
+                                    line.put(AccountData.KEY_LENT_AUTHOR,
+                                             aut_tit[0].replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1").trim());
+                                    if (aut_tit.length > 1)
+					line.put(AccountData.KEY_LENT_TITLE, aut_tit[1].replaceFirst("([^:;\n]+)[:;\n](.*)$", "$1").trim());
+                                }
 				line.put(AccountData.KEY_LENT_DEADLINE, tr.child(1).text()
 						.trim());
 				try {
@@ -1137,12 +1147,12 @@ public class Adis extends BaseApi implements OpacApi {
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}
-				line.put(AccountData.KEY_LENT_BRANCH, tr.child(2).text().trim());
+                                line.put(AccountData.KEY_LENT_BRANCH, tr.child(2).text().trim());
 				line.put(AccountData.KEY_LENT_LINK,
 						tr.select("input[type=checkbox]").attr("name") + "|"
 								+ alink);
-				// line.put(AccountData.KEY_LENT_RENEWABLE, tr.child(4).text()
-				// .matches(".*nicht verl.+ngerbar.*") ? "N" : "Y");
+                                // line.put(AccountData.KEY_LENT_RENEWABLE, tr.child(4).text()
+                                // .matches(".*nicht verl.+ngerbar.*") ? "N" : "Y");
 				lent.add(line);
 			}
 			assert (lent.size() == anum);
