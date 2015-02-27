@@ -1069,6 +1069,8 @@ public class Adis extends BaseApi implements OpacApi {
 				+ s_service + "&sp=SBK");
 		doc = handleLoginForm(doc, account);
 
+                boolean voebb = doc.head().html().contains("VOEBB");
+
 		AccountData adata = new AccountData(account.getId());
 		for (Element tr : doc.select(".aDISListe tr")) {
 			if (tr.child(0).text().matches(".*F.+llige Geb.+hren.*")) {
@@ -1175,13 +1177,14 @@ public class Adis extends BaseApi implements OpacApi {
 
 		adata.setLent(lent);
 
+                // Vormerkungen incl. Fernleihbestellungen
 		List<String> rlinks = new ArrayList<String>();
 		int rnum = 0;
 		List<Map<String, String>> res = new ArrayList<Map<String, String>>();
 		for (Element tr : doc.select(".rTable_div tr")) {
 			if (tr.select("a").size() == 1) {
 				if ((tr.text().contains("Reservationen") || tr.text().contains(
-						"Vormerkungen"))
+						"Vormerkungen") || tr.text().contains("Fernleihbestellung"))
 						&& !tr.child(0).text().trim().equals("")) {
 					rlinks.add(tr.select("a").first().absUrl("href"));
 					rnum += Integer.parseInt(tr.child(0).text().trim());
@@ -1191,7 +1194,7 @@ public class Adis extends BaseApi implements OpacApi {
 		for (String rlink : rlinks) {
 			Document rdoc = htmlGet(rlink);
 			boolean error = false;
-                        boolean voebb = rdoc.head().html().contains("VOEBB");
+                        boolean fernleihe = voebb && rdoc.html().contains("Ihre Fernleih-Bestellung");
 			Map<String, Integer> colmap = new HashMap<String, Integer>();
 			colmap.put(AccountData.KEY_RESERVATION_TITLE, 2);
 			colmap.put(AccountData.KEY_RESERVATION_BRANCH, 1);
@@ -1224,11 +1227,14 @@ public class Adis extends BaseApi implements OpacApi {
                                                          .trim());
                                         }
 					line.put(AccountData.KEY_RESERVATION_TITLE, title.trim());
-					line.put(
-							AccountData.KEY_RESERVATION_BRANCH,
-							tr.child(
-									colmap.get(AccountData.KEY_RESERVATION_BRANCH))
-									.text().trim());
+
+                                        String branch =  tr.child(colmap.get(AccountData.KEY_RESERVATION_BRANCH))
+                                            .text().trim();
+                                        if (fernleihe) {
+                                            branch = "Fernleihe " + branch;
+                                        }
+					line.put(AccountData.KEY_RESERVATION_BRANCH, branch);
+
 					if (rlink.contains("SRGLINK_2")) {
 						// Abholbereite Bestellungen
 						line.put("available", "bereit");
