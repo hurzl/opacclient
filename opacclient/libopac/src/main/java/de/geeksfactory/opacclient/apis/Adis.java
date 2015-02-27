@@ -1184,7 +1184,9 @@ public class Adis extends BaseApi implements OpacApi {
 		for (Element tr : doc.select(".rTable_div tr")) {
 			if (tr.select("a").size() == 1) {
 				if ((tr.text().contains("Reservationen") || tr.text().contains(
-						"Vormerkungen") || tr.text().contains("Fernleihbestellung"))
+						"Vormerkungen") || tr.text().contains("Fernleihbestellung") ||
+                                                tr.text().contains("Magazin") ||
+                                                tr.text().contains("Fernleihbestellung"))
 						&& !tr.child(0).text().trim().equals("")) {
 					rlinks.add(tr.select("a").first().absUrl("href"));
 					rnum += Integer.parseInt(tr.child(0).text().trim());
@@ -1194,6 +1196,7 @@ public class Adis extends BaseApi implements OpacApi {
 		for (String rlink : rlinks) {
 			Document rdoc = htmlGet(rlink);
 			boolean error = false;
+                        boolean magazin = voebb && rdoc.html().contains("aus dem Magazin");
                         boolean fernleihe = voebb && rdoc.html().contains("Ihre Fernleih-Bestellung");
 			Map<String, Integer> colmap = new HashMap<String, Integer>();
 			colmap.put(AccountData.KEY_RESERVATION_TITLE, 2);
@@ -1232,10 +1235,12 @@ public class Adis extends BaseApi implements OpacApi {
                                             .text().trim();
                                         if (fernleihe) {
                                             branch = "Fernleihe " + branch;
+                                        } else if (magazin) {
+                                            branch = "Magazin " + branch;
                                         }
 					line.put(AccountData.KEY_RESERVATION_BRANCH, branch);
 
-					if (rlink.contains("SRGLINK_2")) {
+					if (!voebb && rlink.contains("SRGLINK_2")) {
 						// Abholbereite Bestellungen
 						line.put("available", "bereit");
 						if (tr.child(0).text().trim().length() >= 10)
