@@ -1185,6 +1185,7 @@ public class Adis extends BaseApi implements OpacApi {
 			if (tr.select("a").size() == 1) {
 				if ((tr.text().contains("Reservationen") || tr.text().contains(
 						"Vormerkungen") || tr.text().contains("Fernleihbestellung") ||
+                                                tr.text().contains("Bereitstellung") ||
                                                 tr.text().contains("Magazin") ||
                                                 tr.text().contains("Fernleihbestellung"))
 						&& !tr.child(0).text().trim().equals("")) {
@@ -1198,6 +1199,7 @@ public class Adis extends BaseApi implements OpacApi {
 			boolean error = false;
                         boolean magazin = voebb && rdoc.html().contains("aus dem Magazin");
                         boolean fernleihe = voebb && rdoc.html().contains("Ihre Fernleih-Bestellung");
+                        boolean bereitstellung = voebb && rdoc.html().contains("Ihre Bereitstellung");
 			Map<String, Integer> colmap = new HashMap<String, Integer>();
 			colmap.put(AccountData.KEY_RESERVATION_TITLE, 2);
 			colmap.put(AccountData.KEY_RESERVATION_BRANCH, 1);
@@ -1234,9 +1236,11 @@ public class Adis extends BaseApi implements OpacApi {
                                         String branch =  tr.child(colmap.get(AccountData.KEY_RESERVATION_BRANCH))
                                             .text().trim();
                                         if (fernleihe) {
-                                            branch = "Fernleihe " + branch;
+                                            branch = "Fernleihe: " + branch;
                                         } else if (magazin) {
-                                            branch = "Magazin " + branch;
+                                            branch = "Magazin: " + branch;
+                                        } else if (bereitstellung) {
+                                            branch = "Bereit: " + branch;
                                         }
 					line.put(AccountData.KEY_RESERVATION_BRANCH, branch);
 
